@@ -21,8 +21,8 @@ axs1.grid(True)
 axs2.grid(True)
 
 # integration parameters
-h = 0.18
-timeRange = 10000
+h = 0.005
+timeRange = 100
 
 # physical parameters
 m = 0.1 # mass      (kg)
@@ -79,11 +79,18 @@ sectionThetas = []
 sectionOmegas = []
 
 for pt in poincareTime:
-    while point[2] < pt:
+    while timeTrajectory[currentPoint][2] < pt: # while section not crossed
         currentPoint += 1
-        point = timeTrajectory[currentPoint]
-    sectionThetas.append(point[0])
-    sectionOmegas.append(point[1])
+    # section crossed, interpolate state-space point from current and current-1
+    phaseInCurrentPeriod = pt - timeTrajectory[currentPoint][2]
+    interpolationThetaSlope = (timeTrajectory[currentPoint][0]-timeTrajectory[currentPoint-1][0])/(poincarePeriod)
+    interpolatedOmegaSlope = (timeTrajectory[currentPoint][1]-timeTrajectory[currentPoint-1][1])/(poincarePeriod)
+    interpolatedTheta = timeTrajectory[currentPoint][0] + interpolationThetaSlope * phaseInCurrentPeriod
+    interpolatedOmega = timeTrajectory[currentPoint][1] + interpolatedOmegaSlope * phaseInCurrentPeriod
+    print('theta change:',interpolationThetaSlope * phaseInCurrentPeriod)
+    print('omega change:',interpolatedOmegaSlope * phaseInCurrentPeriod)
+    sectionThetas.append(interpolatedTheta)
+    sectionOmegas.append(interpolatedOmega)
 
 lenTransient = 0 #int((len(sectionThetas)/1.5))
 

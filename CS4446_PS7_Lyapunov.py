@@ -1,8 +1,55 @@
+from time import time
 import numpy as np 
 from matplotlib import pyplot as plt
 import math
 from math import pi as PI
 import matplotlib.ticker as tck
+
+# integration method
+def RK4_step(stateVector,t,h):
+	k1 = F(stateVector,t)
+	k2 = F(stateVector+(h/2)*k1,t+(h/2))
+	k3 = F(stateVector+(h/2)*k2,t+(h/2))
+	k4 = F(stateVector+h*k3,t+h)
+
+	return stateVector+(h/6)*(k1+2*k2+2*k3+k4)
+
+# integrand
+def F(stateVector,t):
+	x = stateVector[0]
+	y = stateVector[1]
+	z = stateVector[2]
+
+
+	dxx = stateVector[3]
+	dxy = stateVector[4]
+	dxz = stateVector[5]
+
+	dyx = stateVector[6]
+	dyy = stateVector[7]
+	dyz = stateVector[8]
+
+	dzx = stateVector[9]
+	dzy = stateVector[10]
+	dzz = stateVector[11]
+
+	return np.array([
+		a*(y-x), # system
+		r*x-y-x*z, 
+		x*y-b*z,
+
+		-a*dxx+a*dxy, # variational equations
+		-a*dyx+a*dyy,
+		-a*dzx+a*dzy,
+
+		(r-z)*dxx-dxy-x*dxz,
+		(r-z)*dyx-dyy-x*dyz,
+		(r-z)*dzx-dzy-x*dzz,
+
+		y*dxx+x*dxy-b*dxz,
+		y*dyx+x*dyy-b*dyz,
+		y*dzx+x*dzy-b*dzz
+		])
 
 # matplotlib setup
 fig = plt.figure()
@@ -18,88 +65,29 @@ axs.set_ylabel('y')
 axs.set_xlabel('x')
 
 # integration parameters
-tolerance = 0.08#
+tolerance = 0.08
 h = 0.001
+timeRange = 0.1
+t = 0
 
-# initial state
-stateVector = np.array([13,-12,52])
-
-# physical parameters
-# a = 0.398
-# b = 2
-# c = 4
+# system parameters
 a = 16
 r = 45
 b = 4
 
-def F(stateVector,t):
-	x = stateVector[0]
-	y = stateVector[1]
-	z = stateVector[2]
-	
-	#return np.array([-(y + z),x+a*y,b+z*(x - c)])
-	return np.array([a*(y-x),r*x-y-x*z,x*y-b*z])
-	
+# initial state
+stateVector = np.array([0,-1,2,1,0,0,0,1,0,0,0,1])
+#0,1,2,1,0,0,0,1,0,0,0,1
+#10, -5, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1
 
-def RK4_step(stateVector,t,h):
-	k1 = F(stateVector,t)
-	k2 = F(stateVector+(h/2)*k1,t+(h/2))
-	k3 = F(stateVector+(h/2)*k2,t+(h/2))
-	k4 = F(stateVector+h*k3,t+h)
-
-	return stateVector+(h/6)*(k1+2*k2+2*k3+k4)
-
-adaptiveTimeRange = 100
-fixedTime = np.arange(0.0, adaptiveTimeRange, h)
-x = []
-y = []
-z = []
-
-x.append(stateVector[0])
-y.append(stateVector[1])
-z.append(stateVector[2])
+trajectory = []
 
 # fixed time step solution
-for t in fixedTime:
+while(t <= timeRange):
 	stateVector = RK4_step(stateVector,t,h)
-
-	x.append(stateVector[0])
-	y.append(stateVector[1])
-	z.append(stateVector[2])
-
-# axs.plot3D(x,y,z,'gray',markersize=0.1,color='orange')
-
-t = 0
-h = 0.001
-stateVector = np.array([13,-12,52])
-x = []
-y = []
-z = []
-
-x.append(stateVector[0])
-y.append(stateVector[1])
-z.append(stateVector[2])
-
-# adaptive time steps
-while t <= adaptiveTimeRange:
-
-	stateVectorHighPrecision = RK4_step(RK4_step(stateVector,t,h/2),t,h/2) # test steps
-	stateVectorLowPrecision = RK4_step(stateVector,t,h)
-
-	diff = np.linalg.norm(stateVectorHighPrecision-stateVectorLowPrecision) # euclidean distance
-
-	h = h * ( abs(tolerance/diff) )**0.2 # formula for best h
-
-	stateVector = RK4_step(stateVector,t,h)
-
-	x.append(stateVector[0])
-	y.append(stateVector[1])
-	z.append(stateVector[2])
-
-	t+= h
-
-# axs.plot3D(x,y,z,markersize=0.01,color='blue')
-axs.scatter3D(x,y,z,s=1,color='blue')
-
-
-plt.show()
+	trajectory.append(stateVector)
+	t += h
+print(stateVector[3:])
+print(stateVector[3]+stateVector[6]+stateVector[9])
+print(stateVector[4]+stateVector[7]+stateVector[10])
+print(stateVector[5]+stateVector[8]+stateVector[11])
